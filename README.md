@@ -48,3 +48,9 @@ It uses the SimpleKML library to create KML objects for each point in the DataFr
 Finally, it prints a message confirming the file's creation. When called with appropriate arguments, it creates a KML file named 'points.kml' containing the plotted points.
 
 ## Output Files 
+
+## Crew members 
+* Bar Alayof - 206840621
+* Avihay Finish - 208907113
+* Amit Rovshitz - 207701426
+* Shoval Zohar - 318284668
