@@ -130,7 +130,6 @@ def ecef_to_lla(location):
     latitude = lla[0]
     longitude = lla[1]
     altitude = lla[2]
-    print("latitude:", latitude, "longitude:", longitude, "altitude:", altitude)
     return latitude, longitude, altitude
 
 def calculate_satellite_position(ephemeris, transmit_time):
