@@ -17,6 +17,7 @@ It primarily focuses on extracting and processing raw GNSS measurements from And
 *  Modify the script's main function to specify the input file path.
 *  Ensure that the file contains the necessary information, including Fix and Raw data. Open the Python script containing the code in your preferred Python environment.
 * The script will process the GNSS data, calculate satellite and receiver positions, and generate output files including CSV files containing satellite and receiver positions, as well as a KML file.
+  
   **How to run:**
 ```` python LogToCsvKml.py ````
 
