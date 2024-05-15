@@ -12,9 +12,10 @@ It primarily focuses on extracting and processing raw GNSS measurements from And
 ** pip install pandas numpy matplotlib navpy gnssutils simplekml**
 
 ### Useage
-Place your GNSS data file (e.g., driving.txt) in the same directory as the script. Modify the script's main function to specify the input file path.Ensure that the file contains the necessary information, including Fix and Raw data.
-Open the Python script containing the code in your preferred Python environment.
-The script will process the GNSS data, calculate satellite and receiver positions, and generate output files including CSV files containing satellite and receiver positions, as well as a KML file for visualization.
+* Place your GNSS data file (e.g., driving.txt) in the same directory as the script.
+*  Modify the script's main function to specify the input file path.
+*  Ensure that the file contains the necessary information, including Fix and Raw data. Open the Python script containing the code in your preferred Python environment.
+* The script will process the GNSS data, calculate satellite and receiver positions, and generate output files including CSV files containing satellite and receiver positions, as well as a KML file.
 
 ### Data Preprocessing
 The code begins by reading the input file and extracting Fix and Raw data into Pandas DataFrames for further processing. It then cleans and formats the data, ensuring consistency and correctness.
