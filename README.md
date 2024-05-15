@@ -48,6 +48,16 @@ This function defines a function `create_kml_from_lla` that generates a KML file
 It uses the SimpleKML library to create KML objects for each point in the DataFrame and saves the resulting KML file to the specified output filepath.
 Finally, it prints a message confirming the file's creation. When called with appropriate arguments, it creates a KML file named 'points.kml' containing the plotted points.
 
+### Tests
+This repository includes a suite of tests to ensure the accuracy and reliability of the implemented algorithms. The tests cover key functionalities such as satellite position estimation and coordinate conversion.
+
+#### Running Tests
+To run the tests, execute the TestAlgorithm class located in the LogToCsvKml module using the unittest framework. Ensure that all dependencies are installed before running the tests.
+``` python -m unittest LogToCsvKml.TestAlgorithm ```
+#### Test Results
+Successful execution of all tests indicates that the algorithms are likely functioning correctly.
+Test failures suggest potential issues with the implementation that require further investigation and debugging.
+
 ## Output Files 
 CsvFile.csv
 KmlFile.kml
