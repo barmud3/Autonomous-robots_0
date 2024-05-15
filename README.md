@@ -1,4 +1,4 @@
-# Project Overview:
+![image](https://github.com/barmud3/Autonomous-robots_0/assets/130641348/94fd1011-46e3-4078-b97f-026f1ed7ff6a)# Project Overview:
 
 This code is designed to process GPS measurements and generate key information such as satellite positions and pseudorange corrections. 
 It primarily focuses on extracting and processing raw GNSS measurements from Android devices, performing necessary conversions and calculations, and then exporting the results for further analysis or visualization.
@@ -16,6 +16,7 @@ It primarily focuses on extracting and processing raw GNSS measurements from And
 *  Modify the script's main function to specify the input file path.
 *  Ensure that the file contains the necessary information, including Fix and Raw data. Open the Python script containing the code in your preferred Python environment.
 * The script will process the GNSS data, calculate satellite and receiver positions, and generate output files including CSV files containing satellite and receiver positions, as well as a KML file.
+* Add the raw data files in sample folder that can be found in : data -> sample -> drop your raw file here.
 
 ## Data Preprocessing
 The code begins by reading the input file and extracting Fix and Raw data into Pandas DataFrames for further processing. It then cleans and formats the data, ensuring consistency and correctness.
@@ -48,6 +49,14 @@ It uses the SimpleKML library to create KML objects for each point in the DataFr
 Finally, it prints a message confirming the file's creation. When called with appropriate arguments, it creates a KML file named 'points.kml' containing the plotted points.
 
 ## Output Files 
+CsvFile.csv
+KmlFile.kml
+### Examples
+Kml File : 
+![image](https://github.com/barmud3/Autonomous-robots_0/assets/130641348/50a6bfad-1111-4c4d-911f-82d2be6e6a59)
+
+Csv File : 
+![image](https://github.com/barmud3/Autonomous-robots_0/assets/130641348/f6a53788-fe8a-47c5-ae88-49b7a06b4e09)
 
 ## Crew members 
 * Bar Alayof - 206840621
