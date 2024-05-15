@@ -46,3 +46,5 @@ and finally converting the ECEF coordinates to Latitude, Longitude, and Altitude
 This function defines a function `create_kml_from_lla` that generates a KML file from a DataFrame containing Latitude, Longitude, and Altitude (LLA) coordinates.
 It uses the SimpleKML library to create KML objects for each point in the DataFrame and saves the resulting KML file to the specified output filepath.
 Finally, it prints a message confirming the file's creation. When called with appropriate arguments, it creates a KML file named 'points.kml' containing the plotted points.
+
+## Output Files 
