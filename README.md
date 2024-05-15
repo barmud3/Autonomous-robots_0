@@ -8,7 +8,7 @@ It primarily focuses on extracting and processing raw GNSS measurements from And
 * Python 3.x
 * Required Libraries: sys, os, csv, datetime, pandas, numpy, matplotlib, navpy, gnssutils, simplekml
 
-- Ensure that all required dependencies are installed. You can install missing dependencies using pip:
+#### - Ensure that all required dependencies are installed. You can install missing dependencies using pip:
  ** pip install pandas numpy matplotlib navpy gnssutils simplekml**
 
 ## Useage
