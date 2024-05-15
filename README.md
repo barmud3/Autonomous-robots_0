@@ -9,7 +9,7 @@ It primarily focuses on extracting and processing raw GNSS measurements from And
 * Required Libraries: sys, os, csv, datetime, pandas, numpy, navpy, gnssutils, simplekml
 
 #### - Ensure that all required dependencies are installed. You can install missing dependencies using pip:
- ** pip install pandas numpy matplotlib navpy gnssutils simplekml**
+ ** pip install pandas numpy navpy gnssutils simplekml**
 
 ## Useage
 * Place your GNSS data file (e.g., driving.txt) in the same directory as the script.
