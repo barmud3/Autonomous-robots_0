@@ -1,4 +1,4 @@
-![image](https://github.com/barmud3/Autonomous-robots_0/assets/130641348/94fd1011-46e3-4078-b97f-026f1ed7ff6a)# Project Overview:
+# Project Overview:
 
 This code is designed to process GPS measurements and generate key information such as satellite positions and pseudorange corrections. 
 It primarily focuses on extracting and processing raw GNSS measurements from Android devices, performing necessary conversions and calculations, and then exporting the results for further analysis or visualization.
