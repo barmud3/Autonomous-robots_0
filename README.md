@@ -23,7 +23,7 @@ Satellite Position Calculation: The code utilizes ephemeris data to calculate sa
 Coordinate Transformation: Using the Navpy library, the code transforms satellite positions from ECEF (Earth-Centered, Earth-Fixed) coordinates to Latitude, Longitude, and Altitude (LLA) coordinates.
 Output Generation: The code exports the processed data and results into CSV files for further analysis. Additionally, it generates a KML file containing plotted points based on the calculated LLA coordinates.
 
-### Explanation of the code
+## Explanation of the code
 
 First of all, the code reads GNSS (Global Navigation Satellite System) data from a CSV file, separates it into Android fixes and raw measurements, processes and filters the data, performs time-related calculations,
 selects satellite measurements based on criteria such as signal strength and pseudorange, retrieves ephemeris data for the satellites selected, and saves the processed data to a CSV file.
