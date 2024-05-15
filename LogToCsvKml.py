@@ -1,8 +1,7 @@
 import sys, os, csv
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import navpy
 from gnssutils import EphemerisManager
 import simplekml
@@ -15,9 +14,6 @@ ephemeris_data_directory = os.path.join(parent_directory, 'data')
 sys.path.insert(0, parent_directory)
 # Get path to sample file in data directory, which is located in the parent directory of this notebook
 input_filepath = os.path.join(parent_directory, 'data', 'sample', 'Walking.txt')
-
-###########################################
-
 
 with open(input_filepath) as csvfile:
     reader = csv.reader(csvfile)
@@ -40,7 +36,7 @@ measurements = pd.DataFrame(measurements[1:], columns = measurements[0])
 measurements.loc[measurements['Svid'].str.len() == 1, 'Svid'] = '0' + measurements['Svid']
 measurements.loc[measurements['ConstellationType'] == '1', 'Constellation'] = 'G'
 measurements.loc[measurements['ConstellationType'] == '3', 'Constellation'] = 'R'
-measurements['SvName'] = measurements['Constellation'] + measurements['Svid']
+measurements['SatPRN (ID)'] = measurements['Constellation'] + measurements['Svid']
 
 # Remove all non-GPS measurements
 measurements = measurements.loc[measurements['Constellation'] == 'G']
@@ -64,10 +60,6 @@ if 'TimeOffsetNanos' in measurements.columns:
 else:
     measurements['TimeOffsetNanos'] = 0
 
-
-###########################################
-
-
 measurements['GpsTimeNanos'] = measurements['TimeNanos'] - (measurements['FullBiasNanos'] - measurements['BiasNanos'])
 gpsepoch = datetime(1980, 1, 6, 0, 0, 0)
 measurements['UnixTime'] = pd.to_datetime(measurements['GpsTimeNanos'], utc = True, origin=gpsepoch)
@@ -78,58 +70,41 @@ measurements['Epoch'] = 0
 measurements.loc[measurements['UnixTime'] - measurements['UnixTime'].shift() > timedelta(milliseconds=200), 'Epoch'] = 1
 measurements['Epoch'] = measurements['Epoch'].cumsum()
 
-###########################################
-
 # This should account for rollovers since it uses a week number specific to each measurement
-
 measurements['tRxGnssNanos'] = measurements['TimeNanos'] + measurements['TimeOffsetNanos'] - (measurements['FullBiasNanos'].iloc[0] + measurements['BiasNanos'].iloc[0])
 measurements['GpsWeekNumber'] = np.floor(1e-9 * measurements['tRxGnssNanos'] / WEEKSEC)
 measurements['tRxSeconds'] = 1e-9*measurements['tRxGnssNanos'] - WEEKSEC * measurements['GpsWeekNumber']
 measurements['tTxSeconds'] = 1e-9*(measurements['ReceivedSvTimeNanos'] + measurements['TimeOffsetNanos'])
 # Calculate pseudorange in seconds
 measurements['prSeconds'] = measurements['tRxSeconds'] - measurements['tTxSeconds']
-
 # Conver to meters
 measurements['PrM'] = LIGHTSPEED * measurements['prSeconds']
 measurements['PrSigmaM'] = LIGHTSPEED * 1e-9 * measurements['ReceivedSvTimeUncertaintyNanos']
-
-###########################################
 
 manager = EphemerisManager(ephemeris_data_directory)
 
 epoch = 0
 num_sats = 0
 while num_sats < 5 :
-    one_epoch = measurements.loc[(measurements['Epoch'] == epoch) & (measurements['prSeconds'] < 0.1)].drop_duplicates(subset='SvName')
+    one_epoch = measurements.loc[(measurements['Epoch'] == epoch) & (measurements['prSeconds'] < 0.1)].drop_duplicates(subset='SatPRN (ID)')
     timestamp = one_epoch.iloc[0]['UnixTime'].to_pydatetime(warn=False)
-    one_epoch.set_index('SvName', inplace=True)
+    one_epoch.set_index('SatPRN (ID)', inplace=True)
     num_sats = len(one_epoch.index)
     epoch += 1
 
 sats = one_epoch.index.unique().tolist()
 ephemeris = manager.get_ephemeris(timestamp, sats)
 
-
 # Reorder the columns to include 'SvName' as the first column
 one_epoch_selected = one_epoch[['Cn0DbHz', 'UnixTime', 'tTxSeconds']]
-
 one_epoch_selected['tTxSeconds'] = pd.to_timedelta(one_epoch_selected['tTxSeconds'], unit='s')
-
-one_epoch_selected['CombinedTime'] = one_epoch_selected.apply(lambda row: row['UnixTime'] + row['tTxSeconds'], axis=1)
-
+one_epoch_selected['GPS time'] = one_epoch_selected.apply(lambda row: row['UnixTime'] + row['tTxSeconds'], axis=1)
 # Drop the original 'UnixTime' and 'tTxSeconds' columns
 one_epoch_selected.drop(['UnixTime', 'tTxSeconds'], axis=1, inplace=True)
-
-
-# one_epoch_selected = one_epoch_selected.reset_index()  # Resetting the index to convert 'SvName' to a regular column
-
 # Specify the output file path for the selected dataframe
 output_filepath = os.path.join(parent_directory, 'data', 'sample', 'output4_measurements.csv')
 
-# # Save the selected columns DataFrame to a CSV file
-# one_epoch_selected.to_csv(output_filepath, index=False)
 
-###########################################
 def least_squares(xs, measured_pseudorange, x0, b0):
     dx = 100*np.ones(3)
     b = b0
@@ -149,18 +124,14 @@ def least_squares(xs, measured_pseudorange, x0, b0):
         b0 = b0 + db
     norm_dp = np.linalg.norm(deltaP)
     return x0, b0, norm_dp
-###########################################
-def ecef_to_lla(x, y, z):
-    if(ecef_array.ndim == 1):
-        lla_array = np.stack(navpy.ecef2lla(ecef_array),axis=0).reshape(-1,3)
-    else:
-        lla_array = np.stack(navpy.ecef2lla(ecef_array), axis=1)
 
-    # Convert back to Pandas and save to csv
-    lla_df = pd.DataFrame(lla_array, columns=['Latitude', 'Longitude', 'Altitude'])
-    return lla_df
-
-###########################################
+def ecef_to_lla(location):
+    lla = navpy.ecef2lla(location)  # Specify latitude and longitude units
+    latitude = lla[0]
+    longitude = lla[1]
+    altitude = lla[2]
+    print("latitude:", latitude, "longitude:", longitude, "altitude:", altitude)
+    return latitude, longitude, altitude
 
 def calculate_satellite_position(ephemeris, transmit_time):
     mu = 3.986005e14
@@ -218,86 +189,44 @@ def calculate_satellite_position(ephemeris, transmit_time):
     sv_position['y_k'] = x_k_prime*np.sin(Omega_k) + y_k_prime*np.cos(i_k)*np.cos(Omega_k)
     sv_position['z_k'] = y_k_prime*np.sin(i_k)
     
-
-
-    xs = sv_position[['x_k', 'y_k', 'z_k']].to_numpy()
-    pr = sv_position['Psuedo-range']
-    ###########
-    b0 = 0
-    x0 = np.array([0, 0, 0])
-
-    x, b, dp = least_squares(xs, pr, x0, b0)
-    ############
-
-    pos_lla = navpy.ecef2lla(x)
-    sv_position['Pos.X'] = pos_lla[0]
-    sv_position['Pos.Y'] = pos_lla[1]
-    sv_position['Pos.Z'] = pos_lla[2]
- 
-    sv_position['Lat'] ,sv_position['Lon'] , sv_position['Alt'] = ecef_to_lla(pos_lla)
     return sv_position
+
 
 # Run the function and check out the results:
 
 sv_position = calculate_satellite_position(ephemeris, one_epoch['tTxSeconds'])
 
+xs = sv_position[['x_k', 'y_k', 'z_k']].to_numpy()
+pr = sv_position['Psuedo-range']
+b0 = 0
+x0 = np.array([0, 0, 0])
+
+x, b, dp = least_squares(xs, pr, x0, b0)
+    
+sv_position['Pos.X'] = x[0]
+sv_position['Pos.Y'] = x[1]
+sv_position['Pos.Z'] = x[2]
+pos_lla = ecef_to_lla(x)
+sv_position['Lat'] ,sv_position['Lon'] , sv_position['Alt'] = pos_lla[0] , pos_lla[1] , pos_lla[2]
+sv_position.drop(columns=['delT_sv'], inplace=True)
+sv_position.drop(columns=['t_k'], inplace=True)
 # Assuming you've already run the first and second code snippets
 
 # Merge the dataframes based on the index
 merged_df = pd.merge(one_epoch_selected, sv_position, left_index=True, right_index=True)
 
 # Specify the output file path for the merged dataframe
-merged_output_filepath = os.path.join(parent_directory, 'merged_output26.csv')
+merged_output_filepath = os.path.join(parent_directory, 'CsvFile.csv')
+
+merged_df = merged_df.rename(columns={'x_k': 'Sat.X'})
+merged_df = merged_df.rename(columns={'y_k': 'Sat.Y'})
+merged_df = merged_df.rename(columns={'z_k': 'Sat.Z'})
+merged_df = merged_df.rename(columns={'Cn0DbHz': 'CN0'})
 
 # Save the merged dataframe to a CSV file
+
 merged_df.to_csv(merged_output_filepath, index=True)
 
-
-
-##############################################
-
-b0 = 0
-x0 = np.array([0, 0, 0])
-xs = sv_position[['x_k', 'y_k', 'z_k']].to_numpy()
-
-# Apply satellite clock bias to correct the measured pseudorange values
-pr = sv_position["Psuedo-range"]
-x, b, dp = least_squares(xs, pr, x0, b0)
-
-ecef_list = []
-for epoch in measurements['Epoch'].unique():
-    one_epoch = measurements.loc[(measurements['Epoch'] == epoch) & (measurements['prSeconds'] < 0.1)] 
-    one_epoch = one_epoch.drop_duplicates(subset='SvName').set_index('SvName')
-    if len(one_epoch.index) > 4:
-        timestamp = one_epoch.iloc[0]['UnixTime'].to_pydatetime(warn=False)
-        sats = one_epoch.index.unique().tolist()
-        ephemeris = manager.get_ephemeris(timestamp, sats)
-        sv_position = calculate_satellite_position(ephemeris, one_epoch['tTxSeconds'])
-
-        xs = sv_position[['x_k', 'y_k', 'z_k']].to_numpy()
-        pr = sv_position['Psuedo-range']
-        x, b, dp = least_squares(xs, pr, x, b)
-        ecef_list.append(x)
-
-# Perform coordinate transformations using the Navpy library
-
-# convert x y z position to Latitude, 'Longitude, Altitude
-ecef_array = np.stack(ecef_list, axis=0)
-lla_array = np.stack(navpy.ecef2lla(ecef_array), axis=1)
-ref_lla = lla_array[0, :]
-
-# Create DataFrames
-ecef_df = pd.DataFrame(ecef_array, columns=['X', 'Y', 'Z'])
-lla_df = pd.DataFrame(lla_array, columns=['Latitude', 'Longitude', 'Altitude'])
-
-# Save DataFrames to CSV
-# ecef_df.to_csv('ecef_positions.csv', index=False)
-lla_df.to_csv('lla_positions.csv', index=False)
-
-
-
-
-###############################
 
 def create_kml_from_lla(lla_df, output_filepath):
     """
@@ -319,4 +248,39 @@ def create_kml_from_lla(lla_df, output_filepath):
     kml.save(output_filepath)
     print(f"KML file saved at: {output_filepath}")
 
-create_kml_from_lla(lla_df, 'points.kml')
+
+b0 = 0
+x0 = np.array([0, 0, 0])
+xs = sv_position[['x_k', 'y_k', 'z_k']].to_numpy()
+
+# Apply satellite clock bias to correct the measured pseudorange values
+pr = sv_position["Psuedo-range"]
+x, b, dp = least_squares(xs, pr, x0, b0)
+
+ecef_list = []
+for epoch in measurements['Epoch'].unique():
+    one_epoch = measurements.loc[(measurements['Epoch'] == epoch) & (measurements['prSeconds'] < 0.1)] 
+    one_epoch = one_epoch.drop_duplicates(subset='SatPRN (ID)').set_index('SatPRN (ID)')
+    if len(one_epoch.index) > 4:
+        timestamp = one_epoch.iloc[0]['UnixTime'].to_pydatetime(warn=False)
+        sats = one_epoch.index.unique().tolist()
+        ephemeris = manager.get_ephemeris(timestamp, sats)
+        sv_position = calculate_satellite_position(ephemeris, one_epoch['tTxSeconds'])
+
+        xs = sv_position[['x_k', 'y_k', 'z_k']].to_numpy()
+        pr = sv_position['Psuedo-range']
+        x, b, dp = least_squares(xs, pr, x, b)
+        ecef_list.append(x)
+
+# Perform coordinate transformations using the Navpy library
+
+# convert x y z position to Latitude, Longitude, Altitude
+ecef_array = np.stack(ecef_list, axis=0)
+lla_array = np.stack(ecef_to_lla(ecef_array), axis=1)
+ref_lla = lla_array[0, :]
+
+# Create DataFrames
+lla_df = pd.DataFrame(lla_array, columns=['Latitude', 'Longitude', 'Altitude'])
+
+create_kml_from_lla(lla_df, 'KmlFile.kml')
+
